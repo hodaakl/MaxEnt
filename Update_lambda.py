@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[69]:
-
 
 import csv
 import numpy as np 
@@ -19,8 +17,6 @@ import os
 import pandas as pd
 
 
-# In[70]:
-
 
 ## Load Lambda old. 
 ## Load data 
@@ -29,9 +25,8 @@ import pandas as pd
 ## save new lambda 
 
 
-# In[71]:
 
-outputfolder = '/blue/pdixit/hodaakl/output/Automated_MERIDIAN_0201/Run4/'
+outputfolder = '/blue/pdixit/hodaakl/output/Automated_MERIDIAN_0202/Run2/'
 
 
 def calculate_constraints(data):
@@ -42,23 +37,11 @@ def calculate_constraints(data):
 # 
 # 
 def update_lambda(Error, old_lambda, alpha = .5 ):
-    # Lambda = old_lambda.copy() + alpha*(Error)/Constraints
     Lambda = old_lambda.copy() + alpha*(Error)
+    # Lambda = old_lambda.copy() + alpha*(Error)/Constraints
     return Lambda
 
 
-# In[72]:
-
-
-# infer which iteration I am on
-
-
-# In[73]:
-
-
-
-
-# In[74]:
 
 
 lambda_path = outputfolder +'Lambdas.csv'
@@ -68,17 +51,11 @@ iterationp1, _ = Lambda_np.shape
 iteration = iterationp1 -1
 
 
-# In[75]:
-
-
 filename_abund = outputfolder + f'SS_data_{iteration}.csv'
 df = pd.read_csv(filename_abund, sep = ',') 
 
 
 data = df.to_numpy()
-
-
-# In[77]:
 
 
 Constraints = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/Constraints_mu_s.npy')
@@ -122,4 +99,3 @@ if os.path.exists(file_name_lambda):
         add_file_lambda.flush()
 else:
     print('trouble loading file')
-    
