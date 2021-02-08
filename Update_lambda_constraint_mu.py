@@ -24,7 +24,7 @@ import pandas as pd
 
 
 
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0203/Run2/'
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0204/Run1/'
 
 
 def calculate_constraints(data):
@@ -34,11 +34,9 @@ def calculate_constraints(data):
     return mu
 # 
 # 
-def update_lambda(Error, old_lambda, alpha = .5 ):
+def update_lambda(Error, old_lambda, alpha = .05 ):
     # alpha = 0.1
-    alpha_array = np.ones(48)
-    alpha_array[:24] = alpha*alpha_array[:24]
-    alpha_array[24:] = 0.1*alpha*alpha_array[24:]
+    alpha_array = alpha*np.ones(24)
     Lambda = old_lambda.copy() + alpha_array*(Error)
     return Lambda
 
@@ -60,8 +58,9 @@ data = df.to_numpy()
 
 
 Constraints = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/Constraints_mu_s.npy')
-[mu_sim, s_sim] = calculate_constraints(data)
-Preds = np.append(mu_sim, s_sim)
+Constraints = Constraints[:24]
+Preds = calculate_constraints(data)
+# Preds = np.append(mu_sim, s_sim)
 Error = Preds - Constraints 
 print('avg abs error of iteration ' + str(iteration) + '=' + str(round(np.mean(abs(Error)),3)))
 # rel_err = Error/Constraints

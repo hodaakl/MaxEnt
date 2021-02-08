@@ -10,13 +10,13 @@ from collections import defaultdict
 # import concurrent.futures 
 import os
 # with open('names.csv')
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0203/Run2/'
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0204/Run1/'
 file_name_lambda =outputfolder+ 'Lambdas.csv'
 if os.path.exists(file_name_lambda): 
     print('file already exists')
     
 else:
-    Lambda = np.zeros(24*2)
+    Lambda = np.zeros(24)
     with open(file_name_lambda, 'w') as new_file_lambda:
         csv_writer_lambda = csv.writer(new_file_lambda, delimiter = ',')
         csv_writer_lambda.writerow(Lambda)
