@@ -24,7 +24,7 @@ import pandas as pd
 
 
 
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0204/Run1/'
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0210/Run1/'
 
 
 def calculate_constraints(data):
@@ -34,8 +34,7 @@ def calculate_constraints(data):
     return mu
 # 
 # 
-def update_lambda(Error, old_lambda, alpha = .05 ):
-    # alpha = 0.1
+def update_lambda(Error, old_lambda, alpha = 0.01 ):
     alpha_array = alpha*np.ones(24)
     Lambda = old_lambda.copy() + alpha_array*(Error)
     return Lambda
@@ -57,8 +56,8 @@ df = pd.read_csv(filename_abund, sep = ',')
 data = df.to_numpy()
 
 
-Constraints = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/Constraints_mu_s.npy')
-Constraints = Constraints[:24]
+Constraints = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/Constraints_mu_akt21_egfr3.npy')
+# Constraints = Constraints[:24]
 Preds = calculate_constraints(data)
 # Preds = np.append(mu_sim, s_sim)
 Error = Preds - Constraints 
@@ -70,7 +69,7 @@ file_name_lambda =outputfolder+ 'Lambdas.csv'
 
 Old_Lambda = Lambda_np[-1,:]
 # avgabserr = np.mean(abs(Error))
-Lambda = update_lambda(Error = Error, old_lambda= Old_Lambda, alpha = 0.05) 
+Lambda = update_lambda(Error = Error, old_lambda= Old_Lambda, alpha = 0.05/500) 
 Lambda= Lambda.tolist()
 Error = Error.tolist()
 
