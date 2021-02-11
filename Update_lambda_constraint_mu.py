@@ -24,7 +24,11 @@ import pandas as pd
 
 
 
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0210/Run1/'
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0211/Run1/'
+max_AKT = 2609.17  #this will be our scale factor
+# 
+Constraints = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/Constraints_mu_akt21_egfr3.npy')
+Constraints = Constraints/max_AKT
 
 
 def calculate_constraints(data):
@@ -34,9 +38,12 @@ def calculate_constraints(data):
     return mu
 # 
 # 
-def update_lambda(Error, old_lambda, alpha = 0.01 ):
-    alpha_array = alpha*np.ones(24)
-    Lambda = old_lambda.copy() + alpha_array*(Error)
+
+
+def update_lambda(Error, old_lambda, alpha = 0.0001, true_data = Constraints ):
+    # alpha_array = alpha*np.ones(24)
+    Lambda = old_lambda.copy() + alpha*(Error)/true_data
+    # Lambda = old_lambda.copy() + alpha*(Error)/true_data
     return Lambda
 
 
@@ -56,7 +63,6 @@ df = pd.read_csv(filename_abund, sep = ',')
 data = df.to_numpy()
 
 
-Constraints = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/Constraints_mu_akt21_egfr3.npy')
 # Constraints = Constraints[:24]
 Preds = calculate_constraints(data)
 # Preds = np.append(mu_sim, s_sim)
@@ -69,7 +75,7 @@ file_name_lambda =outputfolder+ 'Lambdas.csv'
 
 Old_Lambda = Lambda_np[-1,:]
 # avgabserr = np.mean(abs(Error))
-Lambda = update_lambda(Error = Error, old_lambda= Old_Lambda, alpha = 0.05/500) 
+Lambda = update_lambda(Error = Error, old_lambda= Old_Lambda, alpha = 0.01) 
 Lambda= Lambda.tolist()
 Error = Error.tolist()
 

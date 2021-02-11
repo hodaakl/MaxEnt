@@ -10,7 +10,7 @@ from collections import defaultdict
 # import concurrent.futures 
 import os
 # with open('names.csv')
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0210/Run1/'
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0211/Run1/'
 file_name_lambda =outputfolder+ 'Lambdas.csv'
 if os.path.exists(file_name_lambda): 
     print('file already exists')

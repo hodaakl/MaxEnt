@@ -18,7 +18,8 @@ import os
 # with open('names.csv')
 import pandas as pd
 
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0210/Run1/'
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0211/Run1/'
+max_AKT = 2609.17  #this will be our scale factor
 
 
     
@@ -188,9 +189,9 @@ def solve_model_atT_LSODA(K,L,tend):
     sol = sol_dyn.y[:,-1]
     return sol
 
-def calculate_energy(vec, Lambda):
+def calculate_energy(vec, Lagrange_mul):
     """returns energy. Input is an array of abundances of length 24"""
-    energy = np.dot(vec, Lambda) #  + np.dot(vec**2, Lambda[n:])
+    energy = np.dot(vec, Lagrange_mul) #  + np.dot(vec**2, Lambda[n:])
     return energy 
 
 
@@ -201,8 +202,8 @@ def model_preds(K,L,t):
     aktp = y[14] + K[-2]
     segfr =  y[0] + y[2] + 2*(y[4] + y[6] + y[8]+ y[10] + y[12] + y[13] )
     segfr = segfr + K[-1]
-    aktp = aktp
-    segfr = segfr
+    aktp = aktp/max_AKT
+    segfr = segfr/max_AKT
     return [aktp, segfr]
 
 def get_abund_vec(K): 
@@ -272,13 +273,10 @@ def RunSimulation_v3(Lambda,iteration, Nmc, ignore_steps =0, save_every_nsteps =
     par_high = np.load('/blue/pdixit/hodaakl/Data/High_Pars_0130.npy')
     par_low = np.load('/blue/pdixit/hodaakl/Data/Lower_Pars_0130.npy')
 
-
-      # number of mcmc steps to take to get a distribution 
-    # Lambda = np.ones(nConstraints)
     SaveStep = save_every_nsteps
     
-    ss = 0
-    # Constraints = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/Constraints_mu_s.npy')
+    ss = 0 #to count for ignore steps 
+
     if iteration == 0: 
         K_curr =  np.random.uniform(low = par_low , high = par_high) # current parameters
     else: 
@@ -295,23 +293,26 @@ def RunSimulation_v3(Lambda,iteration, Nmc, ignore_steps =0, save_every_nsteps =
 
 
 
-    print('K_curr  = ' , K_curr)
+    # print('K_curr  = ' , K_curr)
     
     abund_curr = get_abund_vec(K_curr)
     
-    E_curr = calculate_energy(vec =abund_curr ,Lambda = Lambda)
+    E_curr = calculate_energy(vec =abund_curr ,Lagrange_mul = Lambda)
     a = 0 # for acceptance probility
     
     for i in range(Nmc): 
-        print(f'step{i}')
+        # print(f'step{i}')
 #         print()
         K_new = new_pars_v2(pars_old = K_curr,  upperbound = par_high , lowerbound = par_low, beta = .02 )
         
         
-        if len(np.where(K_new!=K_curr)[0])>0: 
+        if len(np.where(K_new!=K_curr)[0])>0: #if new parameters were generated , calculate abundance and energy 
             abund_new = get_abund_vec(K_new)
-            E_new  = calculate_energy(vec =abund_new ,Lambda = Lambda)
+            E_new  = calculate_energy(vec =abund_new ,Lagrange_mul = Lambda)
             A = min(1,np.exp(-E_new + E_curr))
+
+            print(A)
+
             if random.random() < A : #With probability A do x[i+1] = x_proposed
                 a = a+1 
                 K_curr = K_new.copy()
@@ -353,6 +354,8 @@ def RunSimulation_v3(Lambda,iteration, Nmc, ignore_steps =0, save_every_nsteps =
     time3 = time.time()
     print('time for one step = '+ str((time3 - time0)/Nmc))
 
+    # writing the acceptance ration 
+
     if os.path.exists(filename_a_ratio): 
         with open(filename_a_ratio, 'a') as add_file_a:
             csv_adder_a = csv.writer(add_file_a, delimiter = ',')
@@ -363,18 +366,18 @@ def RunSimulation_v3(Lambda,iteration, Nmc, ignore_steps =0, save_every_nsteps =
 
             csv_writer_a = csv.writer(new_file_a, delimiter = ',')
             # csv_writer_a.writerow(Par_fieldnames)
-            csv_writer_a.writerow([A_Ratio])
+            csv_writer_a.writerow([iteration, A_Ratio])
             new_file_a.flush()
-
+  
     return print( f'one MCMC chain of iter {iteration} done')
 
 Par_fieldnames = ['k1 ' ,'kn1  ','k2',' kn2 ','kap', 'kdp', 'kdeg', 'kdegs', 'ki', 'kis', 'krec', 'krecs', 'kbind', 'kunbind', 'kpakt', 'kdpakt', 'ksyn', 'totakt', 'aktbg', 'segfrbg']
 fieldnames = ['pakt_L=0.003_t=0.0','pakt_L=0.1_t=5.0', 'pakt_L=0.1_t=15.0', 'pakt_L=0.1_t=30.0', 'pakt_L=0.1_t=45.0', 'pakt_L=0.32_t=5.0', 'pakt_L=0.32_t=15.0', 'pakt_L=0.32_t=30.0', 'pakt_L=0.32_t=45.0', 'pakt_L=3.16_t=5.0', 'pakt_L=3.16_t=15.0', 'pakt_L=3.16_t=30.0', 'pakt_L=3.16_t=45.0', 'pakt_L=10.0_t=5.0', 'pakt_L=10.0_t=15.0', 'pakt_L=10.0_t=30.0', 'pakt_L=10.0_t=45.0', 'pakt_L=100.0_t=5.0', 'pakt_L=100.0_t=15.0', 'pakt_L=100.0_t=30.0', 'pakt_L=100.0_t=45.0', 'segfr_L=0.0_t=180.0', 'segfr_L=1.0_t=180.0', 'segfr_L=100.0_t=180.0']
 
-Nmc = 10000
-ig_steps = 40
+Nmc = 5000
+ig_steps = 10
 file_name_lambda = outputfolder + 'Lambdas.csv'
-save_ev = 50
+save_ev = 20
 
 if os.path.exists(file_name_lambda): 
     df_lambdas = pd.read_csv(file_name_lambda, sep = ',', header = None) 
