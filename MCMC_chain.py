@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[9]:
-
-
 
 import csv
 import numpy as np 
@@ -21,10 +18,10 @@ import os
 # with open('names.csv')
 import pandas as pd
 
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0203/Run2/'
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0217/Run1/'
+ModelScaleFactor = 1  #this will be our scale factor
 
 
-    
 def model(t, y, K ,L):
     """Model to be solved by the differential equation"""
     # y is of length 16 
@@ -191,15 +188,14 @@ def solve_model_atT_LSODA(K,L,tend):
     sol = sol_dyn.y[:,-1]
     return sol
 
-def calculate_constraints(data, ignore_steps = 0):
-    """ inputs (data) with shape = (ncells, nConditions) : ncells would represent the number of MCMC samples taken"""
-    mu = np.mean(data[ignore_steps:,:], axis = 0 ) # means along the column, to get the mean over all the cells
-    s =  np.mean(data[ignore_steps:,:]**2, axis = 0 ) # means along the column, to get the mean over all the cells
-    return [mu, s]
-def calculate_energy(vec, Lambda):
-    """returns energy. Input is an array of abundances of length len(Lambda/2)"""
-    n = len(vec)
-    energy = np.dot(vec, Lambda[:n]) + np.dot(vec**2, Lambda[n:])
+def calculate_energy(vec, Lagrange_mul):
+    """returns energy. Input is an array of abundances of length 24"""
+    n = 24
+    if len(Lagrange_mul)==n*2:
+        energy = np.dot(vec, Lagrange_mul[:n]) + np.dot(vec**2, Lagrange_mul[n:])
+
+    else: 
+        energy = np.dot(vec, Lagrange_mul) 
     return energy 
 
 
@@ -210,8 +206,8 @@ def model_preds(K,L,t):
     aktp = y[14] + K[-2]
     segfr =  y[0] + y[2] + 2*(y[4] + y[6] + y[8]+ y[10] + y[12] + y[13] )
     segfr = segfr + K[-1]
-    aktp = aktp/100
-    segfr = segfr/100
+    aktp = aktp/ModelScaleFactor
+    segfr = segfr/ModelScaleFactor
     return [aktp, segfr]
 
 def get_abund_vec(K): 
@@ -220,8 +216,6 @@ def get_abund_vec(K):
     nDis = 24
     jj = 0
     
-#     par_high = np.load('/blue/pdixit/hodaakl/Data/High_Pars_0130.npy')
-#     par_low = np.load('/blue/pdixit/hodaakl/Data/Lower_Pars_0130.npy')
     akt_l = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/AKT_L_21_training.npy')
     akt_t = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/AKT_T_21_training.npy')
     akt_t = 60* akt_t
@@ -230,16 +224,14 @@ def get_abund_vec(K):
 
 
     abund_curr = np.zeros(nDis) #holds total 
-    abund_new = np.zeros(nDis)  # holds total
 
     for akt_dis_indx in range(nDis_AKT): 
         L = akt_l[akt_dis_indx]
         t = akt_t[akt_dis_indx]
         akt_model_curr, d =  model_preds(K= K, L = L, t = t)
         abund_curr[jj] = akt_model_curr
-        jj = jj+1 
-
-
+        jj = jj +1
+        
     for egfr_dis_indx in range(nDis_EGFR):
         L = segfr_l[egfr_dis_indx]
         t = 180*60
@@ -274,51 +266,85 @@ def new_pars_v2(pars_old,  upperbound , lowerbound, beta =.02 ):
 
 # In[10]:
 
+def abund_w_cutoff(AbundanceArray):
+    Abund_Bounds = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/Abund_Bounds.npy')
+    if (len(np.where(AbundanceArray>Abund_Bounds[:,1])[0])>0)  or (len(np.where(AbundanceArray<Abund_Bounds[:,0])[0])>0):
+    
+        return 0
+    else :
+        return 1
 
 def RunSimulation_v3(Lambda,iteration, Nmc, ignore_steps =0, save_every_nsteps = 1):
     filename_abund = outputfolder + f'SS_data_{iteration}.csv'
     filename_pars  = outputfolder + f'Pars_{iteration}.csv'
+    filename_a_ratio = outputfolder + f'a_ratio.csv'
 #     Nmc = 4
 
     time0 = time.time()
     par_high = np.load('/blue/pdixit/hodaakl/Data/High_Pars_0130.npy')
     par_low = np.load('/blue/pdixit/hodaakl/Data/Lower_Pars_0130.npy')
 
-
-      # number of mcmc steps to take to get a distribution 
-    # Lambda = np.ones(nConstraints)
     SaveStep = save_every_nsteps
     
-    ss = 0
-    # Constraints = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/Constraints_mu_s.npy')
-    K_curr =  np.random.uniform(low = par_low , high = par_high) # current parameters 
-    print('K_curr  = ' , K_curr)
-    
+    ss = 0 #to count for ignore steps 
+
+    K_curr =  np.random.uniform(low = par_low , high = par_high) # current parameters
+
+    # if iteration == 0: 
+    #     K_curr =  np.random.uniform(low = par_low , high = par_high) # current parameters
+    # else: 
+    #     print('picking the parameters from last iteration')
+    #     # Load the parameters dataset from the previous iteration
+    #     par_path =  outputfolder + f'Pars_{iteration-1}.csv'
+    #     par_df   = pd.read_csv(par_path, sep = ',') 
+    #     par_np   = par_df.to_numpy()
+    #     maxidx   = par_np.shape[0]
+    #     pickidx  = random.randrange(0,maxidx)
+    #     K_curr   = par_np[pickidx,:]    # 
+  
     abund_curr = get_abund_vec(K_curr)
     
-    E_curr = calculate_energy(vec =abund_curr ,Lambda = Lambda)
+#     E_curr = calculate_energy(vec =abund_curr ,Lagrange_mul = Lambda)
+    E_curr = 1000
     a = 0 # for acceptance probility
     
     for i in range(Nmc): 
+        print()
         print(f'step{i}')
 #         print()
         K_new = new_pars_v2(pars_old = K_curr,  upperbound = par_high , lowerbound = par_low, beta = .2 )
         
         
-        if len(np.where(K_new!=K_curr)[0])>0:    #K_new.any() != K_curr.any(): 
-#             print('generated pars different from current pars')
-#             print('k_new = ', K_new)
-#             print('k_old = ', K_curr)
+        if len(np.where(K_new!=K_curr)[0])>0: #if new parameters were generated , calculate abundance and energy 
+            print('new parameters are generated')
             abund_new = get_abund_vec(K_new)
-            E_new  = calculate_energy(vec =abund_new ,Lambda = Lambda)
-            A = min(1,np.exp(-E_new)/np.exp(-E_curr))
-        #         print('mcmc bp2 ')
-            if random.random() < A: #With probability A do x[i+1] = x_proposed
-                a = a+1 
-                K_curr = K_new.copy()
-                abund_curr = abund_new.copy()
-                E_curr = E_new.copy()
+            ## If abund_new is within bounds 
+            if abund_w_cutoff(abund_new) == 1:
+                print('abundance within cutoff')
+            
 
+                E_new  = calculate_energy(vec =abund_new ,Lagrange_mul = Lambda)
+                print('E_new', E_new)
+
+                deltaE = E_new - E_curr 
+                deltaE = np.array([deltaE], dtype = np.float128)
+                
+                prob = np.exp(-deltaE)[0]
+                print('exp(-delta E) = ', round(prob,2))
+                
+                
+                A = min(1,prob)
+                
+                print('A',A)
+                
+
+                if random.random() < A : #With probability A do x[i+1] = x_proposed
+                    a = a+1 
+                    K_curr = K_new.copy()
+                    abund_curr = abund_new.copy()
+                    E_curr = E_new.copy()
+
+        print('E_curr',E_curr)
         if i%SaveStep ==0 :
             ss = ss+1 
             if ss > ignore_steps:
@@ -332,7 +358,7 @@ def RunSimulation_v3(Lambda,iteration, Nmc, ignore_steps =0, save_every_nsteps =
                     with open(filename_abund, 'w') as new_file:
 
                         csv_writer = csv.writer(new_file, delimiter = ',')
-                        csv_writer.writerow(fieldnames)
+                        # csv_writer.writerow(fieldnames)
                         csv_writer.writerow(abund_curr)
                         new_file.flush()
 #          writing the parameters
@@ -345,7 +371,7 @@ def RunSimulation_v3(Lambda,iteration, Nmc, ignore_steps =0, save_every_nsteps =
                     with open(filename_pars, 'w') as new_file_pars:
 
                         csv_writer_pars = csv.writer(new_file_pars, delimiter = ',')
-                        csv_writer_pars.writerow(Par_fieldnames)
+                        # csv_writer_pars.writerow(Par_fieldnames)
                         csv_writer_pars.writerow(K_curr)
                         new_file_pars.flush()
 
@@ -353,15 +379,32 @@ def RunSimulation_v3(Lambda,iteration, Nmc, ignore_steps =0, save_every_nsteps =
     print(f'Acceptance ratio ={ A_Ratio}')
     time3 = time.time()
     print('time for one step = '+ str((time3 - time0)/Nmc))
+
+    # writing the acceptance ration 
+
+    if os.path.exists(filename_a_ratio): 
+        with open(filename_a_ratio, 'a') as add_file_a:
+            csv_adder_a = csv.writer(add_file_a, delimiter = ',')
+            csv_adder_a.writerow([iteration, A_Ratio])
+            add_file_a.flush()
+    else:
+        with open(filename_a_ratio, 'w') as new_file_a:
+
+            csv_writer_a = csv.writer(new_file_a, delimiter = ',')
+            # csv_writer_a.writerow(Par_fieldnames)
+            csv_writer_a.writerow([iteration, A_Ratio])
+            new_file_a.flush()
+  
     return print( f'one MCMC chain of iter {iteration} done')
+
 
 Par_fieldnames = ['k1 ' ,'kn1  ','k2',' kn2 ','kap', 'kdp', 'kdeg', 'kdegs', 'ki', 'kis', 'krec', 'krecs', 'kbind', 'kunbind', 'kpakt', 'kdpakt', 'ksyn', 'totakt', 'aktbg', 'segfrbg']
 fieldnames = ['pakt_L=0.003_t=0.0','pakt_L=0.1_t=5.0', 'pakt_L=0.1_t=15.0', 'pakt_L=0.1_t=30.0', 'pakt_L=0.1_t=45.0', 'pakt_L=0.32_t=5.0', 'pakt_L=0.32_t=15.0', 'pakt_L=0.32_t=30.0', 'pakt_L=0.32_t=45.0', 'pakt_L=3.16_t=5.0', 'pakt_L=3.16_t=15.0', 'pakt_L=3.16_t=30.0', 'pakt_L=3.16_t=45.0', 'pakt_L=10.0_t=5.0', 'pakt_L=10.0_t=15.0', 'pakt_L=10.0_t=30.0', 'pakt_L=10.0_t=45.0', 'pakt_L=100.0_t=5.0', 'pakt_L=100.0_t=15.0', 'pakt_L=100.0_t=30.0', 'pakt_L=100.0_t=45.0', 'segfr_L=0.0_t=180.0', 'segfr_L=1.0_t=180.0', 'segfr_L=100.0_t=180.0']
+file_name_lambda = outputfolder + 'Lambdas.csv'
 
 Nmc = 5000
-ig_steps = 100
-file_name_lambda = outputfolder + 'Lambdas.csv'
-save_ev = 10
+ig_steps = 50 
+save_ev = 25
 
 if os.path.exists(file_name_lambda): 
     df_lambdas = pd.read_csv(file_name_lambda, sep = ',', header = None) 

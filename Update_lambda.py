@@ -24,54 +24,87 @@ import pandas as pd
 
 
 
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0203/Run2/'
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0217/Run1/'
+Constraint_mu_only = True 
+
+ModelScaleFactor = 1  #this will be our scale factor
+# 
+Constraints = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/Constraints_mu_s_unscaled.npy')
 
 
-def calculate_constraints(data):
+Constraints[:24] = Constraints[:24]/ModelScaleFactor
+Constraints[24:] = Constraints[24:]/(ModelScaleFactor**2)
+
+
+
+if Constraint_mu_only: 
+    Constraints = Constraints[:24]
+
+
+
+
+
+def calculate_constraints(data, cons_mu_only = Constraint_mu_only ):
     """ inputs (data) with shape = (ncells, nConditions) : ncells would represent the number of MCMC samples taken"""
     mu = np.mean(data, axis = 0 ) # means along the column, to get the mean over all the cells
-    # s =  np.mean(data**2, axis = 0 ) # means along the column, to get the mean over all the cells
-    return mu
+    s =  np.mean(data**2, axis = 0 ) # means along the column, to get the mean over all the cells
+
+    if cons_mu_only: 
+        Preds = mu
+        
+    else: 
+        Preds = np.append(mu, s)
+
+    return Preds 
 # 
 # 
-def update_lambda(Error, old_lambda, alpha = .5 ):
-    # alpha = 0.1
-    alpha_array = np.ones(48)
-    alpha_array[:24] = alpha*alpha_array[:24]
-    alpha_array[24:] = 0.1*alpha*alpha_array[24:]
-    Lambda = old_lambda.copy() + alpha_array*(Error)
+
+
+def update_lambda(Error, old_lambda, alpha = 0.0001, true_data = Constraints ):
+    # alpha_array = alpha*np.ones(24)
+    Lambda = old_lambda.copy() + alpha*(Error)
+    # Lambda = old_lambda.copy() + alpha*(Error)/true_data
     return Lambda
 
 
+def openfile(filename):
+    with open(filename,'r') as csvfile:
+        reader = csv.reader(csvfile)
+        rows= [col for col in reader]
+    rows=np.array(rows)
+    rows=rows.astype(np.float)
+    return rows
 
 
-lambda_path = outputfolder +'Lambdas.csv'
-lambdadf = pd.read_csv(lambda_path, sep = ',', header = None)
-Lambda_np = lambdadf.to_numpy()
+file_name_lambda =outputfolder+ 'Lambdas.csv'
+# lambdadf = pd.read_csv(lambda_path, sep = ',', header = None)
+Lambda_np = openfile(file_name_lambda)
+
+
+
 iterationp1, _ = Lambda_np.shape
 iteration = iterationp1 -1
 
 
 filename_abund = outputfolder + f'SS_data_{iteration}.csv'
-df = pd.read_csv(filename_abund, sep = ',') 
+# df = pd.read_csv(filename_abund, sep = ',') 
 
 
-data = df.to_numpy()
+data = openfile(filename_abund)
 
 
-Constraints = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/Constraints_mu_s.npy')
-[mu_sim, s_sim] = calculate_constraints(data)
-Preds = np.append(mu_sim, s_sim)
+# Constraints = Constraints[:24]
+Preds = calculate_constraints(data)
+# Preds = np.append(mu_sim, s_sim)
 Error = Preds - Constraints 
 print('avg abs error of iteration ' + str(iteration) + '=' + str(round(np.mean(abs(Error)),3)))
 # rel_err = Error/Constraints
 file_name_error = outputfolder+ 'Errors.csv'
-file_name_lambda =outputfolder+ 'Lambdas.csv'
 # file_name_avg_abs_error =outputfolder+ 'Avg_abs_error.csv'
 
 Old_Lambda = Lambda_np[-1,:]
 # avgabserr = np.mean(abs(Error))
-Lambda = update_lambda(Error = Error, old_lambda= Old_Lambda, alpha = 0.05) 
+Lambda = update_lambda(Error = Error, old_lambda= Old_Lambda, alpha = 0.0001) 
 Lambda= Lambda.tolist()
 Error = Error.tolist()
 
