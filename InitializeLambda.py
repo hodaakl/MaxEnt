@@ -10,8 +10,9 @@ from collections import defaultdict
 # import concurrent.futures 
 import os
 # with open('names.csv')
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0217/Run1/'
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0217/Run2/'
 Constraint_mu_only = True 
+Lambda_init = 0.001*np.random.rand(dim)
 
 
 if not os.path.exists(outputfolder):
@@ -26,7 +27,6 @@ if Constraint_mu_only:
 else: 
     dim = 48
 
-Lambda = 0.001*np.random.rand(dim)
 
 
 if os.path.exists(file_name_lambda): 
@@ -36,5 +36,5 @@ else:
     
     with open(file_name_lambda, 'w') as new_file_lambda:
         csv_writer_lambda = csv.writer(new_file_lambda, delimiter = ',')
-        csv_writer_lambda.writerow(Lambda)
+        csv_writer_lambda.writerow(Lambda_init)
         new_file_lambda.flush()

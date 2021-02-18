@@ -18,7 +18,7 @@ import os
 # with open('names.csv')
 import pandas as pd
 
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0217/Run1/'
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0217/Run2/'
 ModelScaleFactor = 1  #this will be our scale factor
 
 
@@ -274,6 +274,15 @@ def abund_w_cutoff(AbundanceArray):
     else :
         return 1
 
+
+def openfile(filename):
+    with open(filename,'r') as csvfile:
+        reader = csv.reader(csvfile)
+        rows= [col for col in reader]
+    rows=np.array(rows)
+    rows=rows.astype(np.float)
+    return rows
+
 def RunSimulation_v3(Lambda,iteration, Nmc, ignore_steps =0, save_every_nsteps = 1):
     filename_abund = outputfolder + f'SS_data_{iteration}.csv'
     filename_pars  = outputfolder + f'Pars_{iteration}.csv'
@@ -288,19 +297,18 @@ def RunSimulation_v3(Lambda,iteration, Nmc, ignore_steps =0, save_every_nsteps =
     
     ss = 0 #to count for ignore steps 
 
-    K_curr =  np.random.uniform(low = par_low , high = par_high) # current parameters
+    # K_curr =  np.random.uniform(low = par_low , high = par_high) # current parameters
 
-    # if iteration == 0: 
-    #     K_curr =  np.random.uniform(low = par_low , high = par_high) # current parameters
-    # else: 
-    #     print('picking the parameters from last iteration')
-    #     # Load the parameters dataset from the previous iteration
-    #     par_path =  outputfolder + f'Pars_{iteration-1}.csv'
-    #     par_df   = pd.read_csv(par_path, sep = ',') 
-    #     par_np   = par_df.to_numpy()
-    #     maxidx   = par_np.shape[0]
-    #     pickidx  = random.randrange(0,maxidx)
-    #     K_curr   = par_np[pickidx,:]    # 
+    if iteration == 0: 
+        K_curr =  np.random.uniform(low = par_low , high = par_high) # current parameters
+    else: 
+        print('picking the parameters from last iteration')
+        # Load the parameters dataset from the previous iteration
+        par_path =  outputfolder + f'Pars_{iteration-1}.csv'
+        par_np = openfile(par_path)
+        maxidx   = par_np.shape[0]
+        pickidx  = random.randrange(0,maxidx)
+        K_curr   = par_np[pickidx,:]    # 
   
     abund_curr = get_abund_vec(K_curr)
     
@@ -402,9 +410,9 @@ Par_fieldnames = ['k1 ' ,'kn1  ','k2',' kn2 ','kap', 'kdp', 'kdeg', 'kdegs', 'ki
 fieldnames = ['pakt_L=0.003_t=0.0','pakt_L=0.1_t=5.0', 'pakt_L=0.1_t=15.0', 'pakt_L=0.1_t=30.0', 'pakt_L=0.1_t=45.0', 'pakt_L=0.32_t=5.0', 'pakt_L=0.32_t=15.0', 'pakt_L=0.32_t=30.0', 'pakt_L=0.32_t=45.0', 'pakt_L=3.16_t=5.0', 'pakt_L=3.16_t=15.0', 'pakt_L=3.16_t=30.0', 'pakt_L=3.16_t=45.0', 'pakt_L=10.0_t=5.0', 'pakt_L=10.0_t=15.0', 'pakt_L=10.0_t=30.0', 'pakt_L=10.0_t=45.0', 'pakt_L=100.0_t=5.0', 'pakt_L=100.0_t=15.0', 'pakt_L=100.0_t=30.0', 'pakt_L=100.0_t=45.0', 'segfr_L=0.0_t=180.0', 'segfr_L=1.0_t=180.0', 'segfr_L=100.0_t=180.0']
 file_name_lambda = outputfolder + 'Lambdas.csv'
 
-Nmc = 5000
-ig_steps = 50 
-save_ev = 25
+Nmc = 10000
+ig_steps = 100 
+save_ev = 50
 
 if os.path.exists(file_name_lambda): 
     df_lambdas = pd.read_csv(file_name_lambda, sep = ',', header = None) 

@@ -24,7 +24,7 @@ import pandas as pd
 
 
 
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0217/Run1/'
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0217/Run2/'
 Constraint_mu_only = True 
 
 ModelScaleFactor = 1  #this will be our scale factor
