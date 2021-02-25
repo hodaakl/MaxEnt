@@ -16,17 +16,16 @@ import pandas as pd
 
 
 
-## Load Lambda old. 
-## Load data 
-## get constraints data 
-## get new lambda 
-## save new lambda 
+## Loads Lambda old. 
+## Loads data 
+## gets constraints data 
+## gets new lambda 
+## saves new lambda 
 
 
 
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0217/Run2/'
-Constraint_mu_only = True 
-
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0221/Run2/'
+Constraint_mu_only = False 
 ModelScaleFactor = 1  #this will be our scale factor
 # 
 Constraints = np.load('/blue/pdixit/hodaakl/Data/SingleCellData/Constraints_mu_s_unscaled.npy')
@@ -62,8 +61,13 @@ def calculate_constraints(data, cons_mu_only = Constraint_mu_only ):
 
 def update_lambda(Error, old_lambda, alpha = 0.0001, true_data = Constraints ):
     # alpha_array = alpha*np.ones(24)
-    Lambda = old_lambda.copy() + alpha*(Error)
-    # Lambda = old_lambda.copy() + alpha*(Error)/true_data
+    if len(Error) == 24: 
+        alpha_arr = alpha*np.ones(24)
+    else: 
+        alpha_arr = alpha*np.ones(48)
+        alpha_arr[24:] = alpha_arr[24:]/100
+    # Lambda = old_lambda.copy() + alpha*(Error)
+    Lambda = old_lambda.copy() + alpha_arr*(Error)/true_data
     return Lambda
 
 
@@ -87,10 +91,17 @@ iteration = iterationp1 -1
 
 
 filename_abund = outputfolder + f'SS_data_{iteration}.csv'
-# df = pd.read_csv(filename_abund, sep = ',') 
+df = pd.read_csv(filename_abund, sep = ',', header = None) 
+Data_np = df.to_numpy()
+### take away the nan values 
+idxn = np.argwhere(np.isnan(Data_np))
+idx_nan_rows = idxn[:,0]
+
+data = np.delete(Data_np,idx_nan_rows, 0)
 
 
-data = openfile(filename_abund)
+
+# data = openfile(filename_abund)
 
 
 # Constraints = Constraints[:24]

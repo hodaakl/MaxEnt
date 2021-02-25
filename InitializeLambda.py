@@ -1,22 +1,17 @@
 import csv
 import numpy as np 
 import random
-# from multiprocessing import Pool
-# import multiprocessing
 import time
-# sve_ivp
 from scipy.integrate import solve_ivp
 from collections import defaultdict
-# import concurrent.futures 
 import os
-# with open('names.csv')
-outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0217/Run2/'
-Constraint_mu_only = True 
-Lambda_init = 0.001*np.random.rand(dim)
+outputfolder = '/blue/pdixit/hodaakl/output/MaxEnt_0221/Run2/'
+Constraint_mu_only = False 
 
 
 if not os.path.exists(outputfolder):
     os.makedirs(outputfolder)
+
 
     
 
@@ -24,8 +19,12 @@ file_name_lambda =outputfolder+ 'Lambdas.csv'
 
 if Constraint_mu_only: 
     dim = 24
+    Lambda_init = 0.001*np.random.rand(dim) 
+
 else: 
     dim = 48
+    Lambda_init = 0.001*np.random.rand(dim) 
+    Lambda_init[24:] = 0.01*Lambda_init[24:] 
 
 
 
