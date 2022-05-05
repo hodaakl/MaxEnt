@@ -1,0 +1,23 @@
+Author : Hoda Akl 
+Data: 05.04.2022 
+
+The means array for the EGFR data
+mu_arr = np.load('ArraysForMaxEnt/EGFR_mean_10Conditions_20201116.npy')
+
+The second moments array for the EGFR data
+s_arr  = np.load('ArraysForMaxEnt/EGFR_2ndMomentMean_10Conditions_20201116.npy' )
+
+Dictionary of the bin edges for percentiles .1,.2,.3,.4,.5,.6,.7,.8,.9
+binedges_Dictionary = np.load(f'ArraysForMaxEnt/BinEdges_9bins.npy')
+
+Ligand_concentrations -> nM 
+L_arr  = np.load('ArraysForMaxEnt/EDFR_doses_10Conditions_20201116.npy' )
+
+Bounds for the abundances , matrix of two columns and 10 rows. Column one represents lower limit, column 2 represents upper limit
+segfr_lims = np.load('ArraysForMaxEnt/segfr_lims_10conds_0304.npy')
+
+Low bounds for the parameters
+lowpars = np.load('ArraysForMaxEnt/low_Pars_NoDimerazationModel_0301.npy')
+
+upper bounds for the parameters
+highpars = np.load('ArraysForMaxEnt/high_Pars_NoDimerazationModel_0301.npy')
