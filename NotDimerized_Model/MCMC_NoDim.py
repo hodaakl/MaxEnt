@@ -314,11 +314,6 @@ def RunSimulation_v3(Lambda,iteration, Nmc, ignore_steps =0, save_every_nsteps =
 
 
 
-        
-
-
-# In[ ]:
-
 
 file_name_lambda = outputfolder + 'Lambdas.csv'
 
