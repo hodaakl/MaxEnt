@@ -5,7 +5,7 @@ import numpy as np
 import random 
 import time
 import pandas as pd
-from PREDICTION_FUNCTIONS import  get_prec_preds
+from PREDICTION_FUNCTIONS import  cell_pred_fn, get_prec_preds
 from ASSESS_STEP import Cal_E, new_params, params_cutoff, abund_cutoff
 from WRITE_OUTPUT import write_output
 
@@ -39,6 +39,7 @@ def RunMCMC(outpath, Lagrange_multi,  Cons_Bound_dict, abund_low_lim, abund_upp_
     # print(f'iteration {iteration}')
     if iteration == 0: 
         # print(' iteration index 0 , k_initial = avg(bounds)')
+        print(f'iteration = 0, picking params as midpoint of bounds')
         initial_K = .5*(params_upperbound + params_lowerbound ) 
         # E_curr = 10000
 
@@ -54,6 +55,7 @@ def RunMCMC(outpath, Lagrange_multi,  Cons_Bound_dict, abund_low_lim, abund_upp_
         par_np = np.delete(par_np_all,idx_nan_rows, 0)
         maxidx   = par_np.shape[0]
         pickidx  = random.randrange(0,maxidx)
+        print(f'Picking parameters from previous iteration - randomly chosen index {pickidx}')
         initial_K   = par_np[pickidx,:]    # 
     
     if timethis==True:
@@ -104,10 +106,10 @@ def RunMCMC(outpath, Lagrange_multi,  Cons_Bound_dict, abund_low_lim, abund_upp_
     ss=0 # counter for saving 
     # deltaE='notpresent' # initializing the var to avoid error in writing later
 
-    params_filename = outpath + f'/params_{iteration}.csv'
+    # params_filename = outpath + 
     CellPreds_filename =outpath + f'/cellpreds_{iteration}.csv'
-    var_filename =outpath + f'/var_{iteration}.csv'
-    mu_filename = outpath + f'/mu_{iteration}.csv'
+    # var_filename =outpath + f'/var_{iteration}.csv'
+    # mu_filename = outpath + f'/mu_{iteration}.csv'
     info_filename =outpath + f'Info.csv'
 
     ###########################
@@ -160,10 +162,15 @@ def RunMCMC(outpath, Lagrange_multi,  Cons_Bound_dict, abund_low_lim, abund_upp_
                 # print('saving 1')
                 if timethis==True:
                     t = time.time()
-                write_output(CellPreds_filename, pred_curr )
-                write_output(params_filename, k )
-                write_output(var_filename, v_curr )    
-                write_output(mu_filename, mu_curr )
+                ### concatenate all calculated values for each cell to save in a single row
+                outarr = np.concatenate((pred_curr, mu_curr, v_curr , k  ))
+                write_output(CellPreds_filename, outarr )
+                # commented out because this causes interference with other MCMC chains 
+                # resulting in the rows being inconsistent between different chains . 
+                # write_output(CellPreds_filename, pred_curr )
+                # write_output(params_filename, k )
+                # write_output(var_filename, v_curr )    
+                # write_output(mu_filename, mu_curr )
                         
                 if si%6000==0:
                     RJ_Ratio_Par = rj_par/si
@@ -187,7 +194,7 @@ def RunMCMC(outpath, Lagrange_multi,  Cons_Bound_dict, abund_low_lim, abund_upp_
     # print(line)
     write_output(info_filename, line )
     tf = time.time()
-    print(f'MCMC for each step in iteration {iteration} took {(tf-ts)/N_chain}')
+    print(f'MCMC for each step in iteration {iteration} took {(tf-ts)/N_chain} seconds')
     print(f'Ratio of points rejected because they fall off abundance bounds = {RJ_Ratio_Ab}')
     print(f'Ratio of points rejected because they fall off parameter bounds = {RJ_Ratio_Par}')
     print(f'acceptance ratio = {A_Ratio}')

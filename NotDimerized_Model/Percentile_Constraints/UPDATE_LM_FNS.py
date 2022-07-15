@@ -25,7 +25,7 @@ def update_lambda(Error, old_lambda,alpha_cons = 0.05 ):#, alpha_power = 1): tru
 
     # alpha_arr = alpha_arr[:nCons]
 
-    Lambda = old_lambda + alpha_cons*(Error)
+    Lambda = old_lambda + alpha_cons*(Error[:len(old_lambda)])
 
     return Lambda
 

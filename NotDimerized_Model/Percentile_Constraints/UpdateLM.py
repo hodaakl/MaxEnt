@@ -7,10 +7,10 @@ from UPDATE_LM_FNS import calculate_constraints, update_lambda, openfile
 from WRITE_OUTPUT import write_output
 
 ## set path 
-noise_factor=2
+noise_factor=1
 
-path = 'OutputFolder/'
-ArraysPath = 'ArraysForMaxEnt/'
+path = '/blue/pdixit/hodaakl/A1MAXENT_EGF/Percentile_NonDimerized_07152022/'
+ArraysPath = '/blue/pdixit/hodaakl/A1MAXENT_EGF/Code/Percentile_Constraints/ArraysForMaxEnt/'
 
 file_name_lambda = path + 'Lambdas.csv'
 file_name_error = path+ 'Errors.csv'
@@ -20,6 +20,8 @@ if not os.path.exists(file_name_lambda):
     raise ValueError("No saved Lagrange multipliers, nothing to update. You have to save initial Lagrange multipliers first")
 
 # Get the Lagrange multipliers matrix 
+
+##### 
 Lambda_np = openfile(file_name_lambda)
 # define the iteration
 iterationp1, _ = Lambda_np.shape
@@ -39,12 +41,12 @@ ncpc = 9 # number of constraints per condition
 nc = 10 # number of conditions 
 nCons = int(ncpc*nc)
 real_cons = .1* np.ones(nCons)
-# get the errors 
-Error = Preds - real_cons[:len(Preds)]
+# get the errors -- Preds could be larger than constraints because other things could be saved in that file as well
+Error = Preds[:nCons] - real_cons # this error is of same shape as real_cons and lambda
 Old_Lambda = Lambda_np[-1,:]
 ncons = len(real_cons)
 # define step size 
-alpha = .05 
+alpha = .005
 # Update the lagrange multipliers
 Lambda = update_lambda(Error = Error, old_lambda= Old_Lambda, alpha_cons = alpha)#, alpha_power = alpha_power) 
 Lambda= Lambda.tolist()
@@ -53,7 +55,14 @@ Error = Error.tolist()
 ## save the error  and the new lagrange multipliers 
 write_output(file_name_error, Error )
 write_output(file_name_lambda, Lambda)
-
+### ##### SEPERATE THE PREDICTION FILE - it constaints percentiles , mu , var , parameters 
+##### 
+NumPars = 7 # number of parameters in this system
+par_data = data[:,-NumPars:]
+par_filename = path + f'/params_{iteration}.csv' 
+# dump the numpy matrix into a csv file 
+np.savetxt(par_filename, par_data, delimiter=",")
+## 
 ############################################# Plotting
 import matplotlib.pyplot as plt
 if os.path.isdir(path+'figs')==False:

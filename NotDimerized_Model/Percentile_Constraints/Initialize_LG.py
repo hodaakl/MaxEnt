@@ -3,16 +3,16 @@ import pandas as pd
 import numpy as np 
 import csv 
 # ------------------------------------------
-noise_factor=2
-path = 'OutputFolder/'
-ArraysPath = 'ArraysForMaxEnt/'
+noise_factor=1
+path = '/blue/pdixit/hodaakl/A1MAXENT_EGF/Percentile_NonDimerized_07152022/'
+ArraysPath = '/blue/pdixit/hodaakl/A1MAXENT_EGF/Code/Percentile_Constraints/ArraysForMaxEnt/'
 print('path is ',path)
 
-if not os.path.exists(path): 
-    os.mkdir(path)
-else: 
+if os.path.exists(path):
     raise ValueError("folder already exists, can't initialize lambda")
-# ------------------------------------------
+else: 
+    print('creating folder')
+    os.mkdir(path)# ------------------------------------------
 
 nc = 10
 ncpc = 9

@@ -32,12 +32,12 @@ def cell_pred_fn(pars, Ligand_conc, n=1 ):
     Inputs: pars: Parameter vector : [ksyn, k1, kn1, kap, kdp, ki, kis]
                 Pars array is of length 7 
             Ligand_conc : array of ligand concentrations in nM  """
-    n = len(Ligand_conc)
-    means_arr = np.zeros(n)
-    secmom_arr = np.zeros(n)
-    for i in range(n): 
+    conc_len = len(Ligand_conc)
+    means_arr = np.zeros(conc_len)
+    secmom_arr = np.zeros(conc_len)
+    for i in range(conc_len): 
         L = Ligand_conc[i]
-        mu, s = segfr_preds(L = L , pars_arr = pars,n=n,SF = 0.00122 )
+        mu, s = segfr_preds(L = L , pars_arr = pars,SF = 0.00122 , n=n)
         means_arr[i] = mu
         secmom_arr[i] = s
     return means_arr, secmom_arr
