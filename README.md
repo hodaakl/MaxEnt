@@ -1,5 +1,5 @@
 # MERIDIAN
-This repo contains code to infer cellular parameter distributions in signalling networks.
+This repo contains code to infer cellular parameter distributions in signalling networks. Based on the framework in the following paper and expanding it to work with stochastic signaling networks.
 
 
 Maximum Entropy Approach for Predictive Inference[1]
