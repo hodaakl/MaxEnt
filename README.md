@@ -21,15 +21,8 @@ Laboratory of Computational Biophysics
 
 2022
 
-For any questions or feedback [contact us](mailto:hodaakl@ufl.edu)
-
-contact: 
-
+For any questions or feedback [contact me](mailto:hodaakl@ufl.edu)
 Hoda Akl : hodaakl@ufl.edu 
-
-Brooke Emison : bemison@ufl.edu
-
-Purushottam Dixit: pdixit@ufl.edu
 
 
 ### Copyright 
