@@ -1,8 +1,3 @@
-## Maximum Entropy Approach of Inferring cellular parameters using specific signaling networks
-
-
-
-
 # Maximum Entropy Approach of Inferring cellular parameters using specific signaling networks 
 
 As part of the paper [The ability to sense the environment is heterogeneously distributed in cell populations](https://www.biorxiv.org/content/10.1101/2023.03.07.531554v2.abstract)
