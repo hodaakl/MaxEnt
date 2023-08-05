@@ -22,6 +22,3 @@ Laboratory of Computational Biophysics
 2023
 
 For any questions or feedback [contact us](mailto:hodaakl@ufl.edu)
-
-### Copyright 
-The copyright holder for this preprint is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. All rights reserved. No reuse allowed without permission.
